@@ -27,14 +27,30 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     async def async_update_data():
         """Recupera i dati dai client connessi dal router."""
-        return await hass.async_add_executor_job(client.get_connected_devices)
+        devices = await hass.async_add_executor_job(client.get_connected_devices)
+        
+        # Se restituisce 0 dispositivi, probabile problema di sessione o riavvio router
+        if not devices:
+            # Azzera i cookie per forzare un nuovo login al prossimo tentativo
+            client.cookies = None
+            
+            # Se avevamo già dei dati in precedenza (non è il primo avvio),
+            # manteniamo i vecchi dati e ricarichiamo l'integrazione per sbloccarla.
+            if getattr(coordinator, "data", None) is not None:
+                _LOGGER.warning("Rilevati 0 dispositivi connessi. Mantengo i dati precedenti e ricarico l'integrazione.")
+                hass.async_create_task(hass.config_entries.async_reload(entry.entry_id))
+                return coordinator.data
+            else:
+                _LOGGER.warning("Rilevati 0 dispositivi connessi. Attendo il prossimo aggiornamento.")
+                
+        return devices
         
     coordinator = DataUpdateCoordinator(
         hass,
         _LOGGER,
         name=f"Tenda i29 ({host})",
         update_method=async_update_data,
-        update_interval=timedelta(seconds=30),
+        update_interval=timedelta(seconds=60),
     )
 
     # Recupera i dati iniziali (non bloccare il setup se fallisce)
