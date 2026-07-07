@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -54,6 +55,7 @@ class TendaLastCheckedSensor(CoordinatorEntity, SensorEntity):
         self._attr_unique_id = f"tenda_i29_last_checked_{entry_id}"
         self._attr_device_class = SensorDeviceClass.TIMESTAMP
         self._attr_icon = "mdi:clock-check-outline"
+        self._last_updated = None
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry_id)},
             "name": "Tenda i29 Router",
@@ -63,5 +65,7 @@ class TendaLastCheckedSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def native_value(self):
-        """Ritorna il timestamp dell'ultimo aggiornamento riuscito dal coordinator."""
-        return self.coordinator.last_update_success_time
+        """Ritorna il timestamp dell'ultimo aggiornamento riuscito."""
+        if self.coordinator.last_update_success:
+            self._last_updated = datetime.now(timezone.utc)
+        return self._last_updated
