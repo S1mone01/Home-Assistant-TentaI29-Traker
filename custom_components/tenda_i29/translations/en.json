@@ -1,0 +1,17 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurazione Tenda i29",
+        "data": {
+          "host": "Indirizzo IP del Tenda i29",
+          "password": "Password di amministratore"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossibile connettersi all'Access Point",
+      "invalid_auth": "Password errata"
+    }
+  }
+}

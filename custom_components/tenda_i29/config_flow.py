@@ -6,7 +6,7 @@ from homeassistant.core import callback
 
 from .const import DOMAIN
 # Importiamo il client che abbiamo scritto prima per testare le credenziali al login
-from .device_tracker import TendaI29Client 
+from .client import TendaI29Client 
 
 _LOGGER = logging.getLogger(__name__)
 
