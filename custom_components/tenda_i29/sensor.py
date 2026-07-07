@@ -1,9 +1,8 @@
 import logging
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-import homeassistant.util.dt as dt_util
 
 from .const import DOMAIN
 
@@ -27,13 +26,14 @@ class TendaConnectedDevicesSensor(CoordinatorEntity, SensorEntity):
 
     def __init__(self, coordinator, entry_id):
         super().__init__(coordinator)
-        self._attr_name = "Dispositivi Connessi"
+        self._attr_name = "Tenda i29 Dispositivi Connessi"
         self._attr_unique_id = f"tenda_i29_connected_devices_{entry_id}"
-        self._attr_icon = "mdi:router-network"
+        self._attr_icon = "mdi:devices"
         self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_native_unit_of_measurement = "dispositivi"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry_id)},
-            "name": f"Tenda i29 Router",
+            "name": "Tenda i29 Router",
             "manufacturer": "Tenda",
             "model": "i29",
         }
@@ -46,24 +46,22 @@ class TendaConnectedDevicesSensor(CoordinatorEntity, SensorEntity):
         return 0
 
 class TendaLastCheckedSensor(CoordinatorEntity, SensorEntity):
-    """Sensore che mostra l'orario dell'ultimo controllo."""
+    """Sensore che mostra l'orario dell'ultimo controllo riuscito."""
 
     def __init__(self, coordinator, entry_id):
         super().__init__(coordinator)
-        self._attr_name = "Ultimo Controllo"
+        self._attr_name = "Tenda i29 Ultimo Controllo"
         self._attr_unique_id = f"tenda_i29_last_checked_{entry_id}"
         self._attr_device_class = SensorDeviceClass.TIMESTAMP
         self._attr_icon = "mdi:clock-check-outline"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry_id)},
-            "name": f"Tenda i29 Router",
+            "name": "Tenda i29 Router",
             "manufacturer": "Tenda",
             "model": "i29",
         }
 
     @property
     def native_value(self):
-        """Ritorna il timestamp dell'ultimo aggiornamento riuscito."""
-        if self.coordinator.last_update_success:
-            return dt_util.utcnow()
-        return None
+        """Ritorna il timestamp dell'ultimo aggiornamento riuscito dal coordinator."""
+        return self.coordinator.last_update_success_time

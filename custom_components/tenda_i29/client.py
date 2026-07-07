@@ -37,20 +37,24 @@ class TendaI29Client:
         }
 
         rand_param = f"{random.random()}"
-        response = requests.post(
-            f"http://{self.host}/goform/modules?{rand_param}",
-            headers=headers,
-            json=payload,
-            verify=False,
-            allow_redirects=False,
-            timeout=10
-        )
-        
-        if response.cookies:
-            self.cookies = response.cookies
-            _LOGGER.debug("Autenticazione riuscita, cookie salvati.")
-        else:
-            _LOGGER.error("Autenticazione fallita: Nessun cookie ricevuto.")
+        try:
+            response = requests.post(
+                f"http://{self.host}/goform/modules?{rand_param}",
+                headers=headers,
+                json=payload,
+                verify=False,
+                allow_redirects=False,
+                timeout=10
+            )
+            
+            if response.cookies:
+                self.cookies = response.cookies
+                _LOGGER.debug("Autenticazione riuscita, cookie salvati.")
+            else:
+                _LOGGER.error("Autenticazione fallita: Nessun cookie ricevuto.")
+        except requests.exceptions.RequestException as err:
+            _LOGGER.error("Errore di connessione durante l'autenticazione: %s", err)
+            self.cookies = None
 
     def get_connected_devices(self, _retry=True):
         if self.cookies is None:
