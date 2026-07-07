@@ -1,0 +1,12 @@
+{
+  "domain": "tenda_i29",
+  "name": "Tenda i29 Device Tracker",
+  "codeowners": ["@S1mone01"],
+  "dependencies": [],
+  "documentation": "https://github.com/S1mone01/Home-Assistant-TentaI29-Traker",
+  "integration_type": "device_tracker",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/S1mone01/Home-Assistant-TentaI29-Traker/issues",
+  "requirements": ["requests==2.32.3"],
+  "version": "1.0.0"
+}
