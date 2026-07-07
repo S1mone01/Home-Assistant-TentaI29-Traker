@@ -114,6 +114,8 @@ class TendaI29Client:
         return devices
 
     def _parse_device_list(self, client_list, devices, band):
+        if not client_list:
+            return
         for device in client_list:
             mac = device.get("mac")
             if mac:
