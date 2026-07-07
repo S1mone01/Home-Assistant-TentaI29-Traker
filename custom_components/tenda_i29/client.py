@@ -47,13 +47,11 @@ class TendaI29Client:
                 timeout=10
             )
             
-            _LOGGER.debug("Auth response status: %s, cookies: %s", response.status_code, bool(response.cookies))
-            
             if response.cookies:
                 self.cookies = response.cookies
                 _LOGGER.debug("Autenticazione riuscita, cookie salvati.")
             else:
-                _LOGGER.error("Autenticazione fallita: Nessun cookie ricevuto. Status: %s, Body: %s", response.status_code, response.text[:200])
+                _LOGGER.error("Autenticazione fallita: Nessun cookie ricevuto. Status: %s", response.status_code)
         except requests.exceptions.RequestException as err:
             _LOGGER.error("Errore di connessione durante l'autenticazione: %s", err)
             self.cookies = None
@@ -67,23 +65,21 @@ class TendaI29Client:
             return {}
 
         headers = {
-            "Content-Type": "application/json; charset=UTF-8",
+            "Content-Type": "application/json",
         }
 
         rand_param = f"{random.random()}"
 
         try:
-            response = requests.get(
-                f"http://{self.host}/goform/modules?module1=wifiClientList&{rand_param}",
+            response = requests.post(
+                f"http://{self.host}/goform/modules?{rand_param}",
                 headers=headers,
+                json={"wifiClientList": {}},
                 cookies=self.cookies,
                 verify=False,
                 allow_redirects=False,
                 timeout=10
             )
-
-            _LOGGER.debug("GET devices response status: %s, content length: %s", response.status_code, len(response.content))
-            _LOGGER.debug("GET devices response body: %s", response.text[:500])
 
             if response.status_code != 200 or b"wifiClientList" not in response.content:
                 if _retry:
@@ -91,7 +87,7 @@ class TendaI29Client:
                     self.cookies = None
                     self.auth()
                     return self.get_connected_devices(_retry=False)
-                _LOGGER.warning("Impossibile ottenere la lista dei dispositivi. Status: %s, Body: %s", response.status_code, response.text[:300])
+                _LOGGER.warning("Impossibile ottenere la lista dei dispositivi dopo il ri-login.")
                 return {}
 
             json_response = response.json()
@@ -102,7 +98,7 @@ class TendaI29Client:
 
         devices = {}
         client_list = json_response.get("wifiClientList", [])
-        _LOGGER.debug("Trovati %s dispositivi nella risposta", len(client_list))
+        _LOGGER.debug("Trovati %s dispositivi connessi", len(client_list))
 
         for device in client_list:
             mac = device.get("mac")
@@ -111,5 +107,4 @@ class TendaI29Client:
             if mac:
                 devices[mac.lower()] = ip
 
-        _LOGGER.debug("Dispositivi connessi: %s", devices)
         return devices
