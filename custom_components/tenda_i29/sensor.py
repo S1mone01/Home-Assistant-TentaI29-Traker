@@ -110,3 +110,27 @@ class TendaDeviceList5GSensor(CoordinatorEntity, SensorEntity):
 
         device_list.sort(key=lambda d: tuple(int(p) for p in d["ip"].split(".")) if d["ip"] else (999,))
         return {"dispositivi": device_list}
+
+class TendaLastCheckedSensor(CoordinatorEntity, SensorEntity):
+    """Sensore che mostra l'orario dell'ultimo controllo riuscito."""
+
+    def __init__(self, coordinator, entry_id):
+        super().__init__(coordinator)
+        self._attr_name = "Tenda i29 Ultimo Controllo"
+        self._attr_unique_id = f"tenda_i29_last_checked_{entry_id}"
+        self._attr_device_class = SensorDeviceClass.TIMESTAMP
+        self._attr_icon = "mdi:clock-check-outline"
+        self._last_updated = None
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, entry_id)},
+            "name": "Tenda i29 Router",
+            "manufacturer": "Tenda",
+            "model": "i29",
+        }
+
+    @property
+    def native_value(self):
+        """Ritorna il timestamp dell'ultimo aggiornamento riuscito."""
+        if self.coordinator.last_update_success:
+            self._last_updated = datetime.now(timezone.utc)
+        return self._last_updated
