@@ -1,0 +1,4 @@
+{
+  "name": "Tenda i29 Device Tracker",
+  "iot_class": "local_polling"
+}
