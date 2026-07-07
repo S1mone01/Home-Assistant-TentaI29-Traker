@@ -56,44 +56,48 @@ class TendaI29Client:
             _LOGGER.error("Errore di connessione durante l'autenticazione: %s", err)
             self.cookies = None
 
-    def get_connected_devices(self, _retry=True):
+    def _api_post(self, payload, _retry=True):
+        """Esegue una richiesta POST all'API del Tenda i29."""
         if self.cookies is None:
             self.auth()
 
         if self.cookies is None:
-            _LOGGER.warning("Impossibile autenticarsi sul Tenda i29, salto il polling.")
-            return {}
+            return None
 
-        headers = {
-            "Content-Type": "application/json",
-        }
-
+        headers = {"Content-Type": "application/json"}
         rand_param = f"{random.random()}"
 
         try:
             response = requests.post(
                 f"http://{self.host}/goform/modules?{rand_param}",
                 headers=headers,
-                json={"wifiClientList": {}},
+                json=payload,
                 cookies=self.cookies,
                 verify=False,
                 allow_redirects=False,
                 timeout=10
             )
 
-            if response.status_code != 200 or b"wifiClientList" not in response.content:
+            if response.status_code != 200:
                 if _retry:
-                    _LOGGER.debug("Sessione scaduta o invalida, tento il ri-login...")
+                    _LOGGER.debug("Sessione scaduta, tento il ri-login...")
                     self.cookies = None
                     self.auth()
-                    return self.get_connected_devices(_retry=False)
-                _LOGGER.warning("Impossibile ottenere la lista dei dispositivi dopo il ri-login.")
-                return {}
+                    return self._api_post(payload, _retry=False)
+                return None
 
-            json_response = response.json()
+            return response.json()
         except (requests.exceptions.RequestException, json.JSONDecodeError) as err:
             _LOGGER.warning("Errore nella richiesta al Tenda i29: %s", err)
             self.cookies = None
+            return None
+
+    def get_connected_devices(self):
+        """Recupera la lista dei dispositivi connessi con tutti i dettagli."""
+        json_response = self._api_post({"wifiClientList": {}})
+        
+        if json_response is None or "wifiClientList" not in json_response:
+            _LOGGER.warning("Impossibile ottenere la lista dei dispositivi.")
             return {}
 
         devices = {}
@@ -102,9 +106,30 @@ class TendaI29Client:
 
         for device in client_list:
             mac = device.get("mac")
-            ip = device.get("ip")
-
             if mac:
-                devices[mac.lower()] = ip
+                connect_time_sec = int(device.get("connectTime", 0))
+                hours = connect_time_sec // 3600
+                minutes = (connect_time_sec % 3600) // 60
+                
+                if hours > 0:
+                    connect_time_str = f"{hours}h {minutes}m"
+                else:
+                    connect_time_str = f"{minutes}m"
+
+                signal_noise = device.get("signNoise", "")
+                signal = ""
+                if "/" in signal_noise:
+                    signal = signal_noise.split("/")[0]
+
+                devices[mac.lower()] = {
+                    "ip": device.get("ip", ""),
+                    "mac": mac,
+                    "connect_time": connect_time_str,
+                    "connect_time_sec": connect_time_sec,
+                    "tx_rate": device.get("txRate", "0"),
+                    "rx_rate": device.get("rxRate", "0"),
+                    "signal": signal,
+                    "signal_noise": signal_noise,
+                }
 
         return devices

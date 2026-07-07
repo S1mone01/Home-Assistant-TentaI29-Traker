@@ -21,10 +21,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         """Aggiunge nuove entità in base ai MAC rilevati."""
         new_entities = []
         if coordinator.data:
-            for mac, ip in coordinator.data.items():
+            for mac, info in coordinator.data.items():
                 if mac not in tracked_macs:
                     tracked_macs.add(mac)
-                    new_entities.append(TendaScannerEntity(coordinator, mac, ip, entry.entry_id))
+                    new_entities.append(TendaScannerEntity(coordinator, mac, info, entry.entry_id))
             
         if new_entities:
             async_add_entities(new_entities)
@@ -41,11 +41,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 class TendaScannerEntity(CoordinatorEntity, ScannerEntity):
     """Rappresenta un dispositivo tracciato sul Tenda i29."""
 
-    def __init__(self, coordinator, mac_address, ip_address, entry_id):
+    def __init__(self, coordinator, mac_address, device_info, entry_id):
         """Inizializza l'entità tracker."""
         super().__init__(coordinator)
         self._mac_address = mac_address
-        self._ip_address = ip_address
+        self._initial_ip = device_info.get("ip", "")
         self._attr_unique_id = f"tenda_i29_{mac_address}"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry_id)},
@@ -53,6 +53,12 @@ class TendaScannerEntity(CoordinatorEntity, ScannerEntity):
             "manufacturer": "Tenda",
             "model": "i29",
         }
+
+    def _get_device_data(self):
+        """Ritorna i dati aggiornati del dispositivo dal coordinator."""
+        if self.coordinator.data and self._mac_address in self.coordinator.data:
+            return self.coordinator.data[self._mac_address]
+        return None
 
     @property
     def mac_address(self) -> str:
@@ -62,9 +68,10 @@ class TendaScannerEntity(CoordinatorEntity, ScannerEntity):
     @property
     def ip_address(self) -> str:
         """Ritorna l'indirizzo IP del dispositivo."""
-        if self.coordinator.data:
-            return self.coordinator.data.get(self._mac_address, self._ip_address)
-        return self._ip_address
+        data = self._get_device_data()
+        if data:
+            return data.get("ip", self._initial_ip)
+        return self._initial_ip
 
     @property
     def name(self) -> str:
@@ -74,9 +81,7 @@ class TendaScannerEntity(CoordinatorEntity, ScannerEntity):
     @property
     def is_connected(self) -> bool:
         """Ritorna True se il dispositivo è connesso."""
-        if self.coordinator.data:
-            return self._mac_address in self.coordinator.data
-        return False
+        return self._get_device_data() is not None
 
     @property
     def source_type(self) -> SourceType:
@@ -86,7 +91,18 @@ class TendaScannerEntity(CoordinatorEntity, ScannerEntity):
     @property
     def extra_state_attributes(self):
         """Attributi extra visibili nella scheda dell'entità."""
+        data = self._get_device_data()
+        if data:
+            return {
+                "mac_address": self._mac_address,
+                "ip_address": data.get("ip", ""),
+                "connesso_da": data.get("connect_time", ""),
+                "velocita_tx": f"{data.get('tx_rate', '0')} Mbps",
+                "velocita_rx": f"{data.get('rx_rate', '0')} Mbps",
+                "segnale": data.get("signal", ""),
+                "segnale_rumore": data.get("signal_noise", ""),
+            }
         return {
             "mac_address": self._mac_address,
-            "ip_address": self.ip_address,
+            "ip_address": self._initial_ip,
         }

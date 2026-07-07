@@ -16,7 +16,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
     sensors = [
         TendaConnectedDevicesSensor(coordinator, entry.entry_id),
-        TendaLastCheckedSensor(coordinator, entry.entry_id)
+        TendaLastCheckedSensor(coordinator, entry.entry_id),
+        TendaDeviceListSensor(coordinator, entry.entry_id),
     ]
     
     async_add_entities(sensors)
@@ -69,3 +70,47 @@ class TendaLastCheckedSensor(CoordinatorEntity, SensorEntity):
         if self.coordinator.last_update_success:
             self._last_updated = datetime.now(timezone.utc)
         return self._last_updated
+
+class TendaDeviceListSensor(CoordinatorEntity, SensorEntity):
+    """Sensore che mostra l'elenco completo dei dispositivi connessi."""
+
+    def __init__(self, coordinator, entry_id):
+        super().__init__(coordinator)
+        self._attr_name = "Tenda i29 Elenco Dispositivi"
+        self._attr_unique_id = f"tenda_i29_device_list_{entry_id}"
+        self._attr_icon = "mdi:format-list-bulleted"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, entry_id)},
+            "name": "Tenda i29 Router",
+            "manufacturer": "Tenda",
+            "model": "i29",
+        }
+
+    @property
+    def native_value(self):
+        """Ritorna il numero di dispositivi come stato."""
+        if self.coordinator.data:
+            return f"{len(self.coordinator.data)} connessi"
+        return "0 connessi"
+
+    @property
+    def extra_state_attributes(self):
+        """Ritorna l'elenco completo dei dispositivi come attributi."""
+        if not self.coordinator.data:
+            return {"dispositivi": []}
+
+        device_list = []
+        for mac, info in self.coordinator.data.items():
+            device_list.append({
+                "mac": mac.upper(),
+                "ip": info.get("ip", ""),
+                "connesso_da": info.get("connect_time", ""),
+                "velocita_tx": f"{info.get('tx_rate', '0')} Mbps",
+                "velocita_rx": f"{info.get('rx_rate', '0')} Mbps",
+                "segnale": info.get("signal", ""),
+            })
+
+        # Ordina per IP
+        device_list.sort(key=lambda d: tuple(int(p) for p in d["ip"].split(".")) if d["ip"] else (999,))
+
+        return {"dispositivi": device_list}
