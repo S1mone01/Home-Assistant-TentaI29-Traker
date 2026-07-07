@@ -15,26 +15,8 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities):
     """Configura la piattaforma device_tracker basata sul Config Flow."""
-    config = hass.data[DOMAIN][entry.entry_id]
-    host = config[CONF_HOST]
-    password = config[CONF_PASSWORD]
-    
-    client = TendaI29Client(host, password)
-    
-    async def async_update_data():
-        """Recupera i dati dai client connessi dal router."""
-        return await hass.async_add_executor_job(client.get_connected_devices)
-        
-    coordinator = DataUpdateCoordinator(
-        hass,
-        _LOGGER,
-        name=f"Tenda i29 ({host})",
-        update_method=async_update_data,
-        update_interval=timedelta(seconds=30),
-    )
-
-    # Recupera i dati iniziali
-    await coordinator.async_config_entry_first_refresh()
+    data = hass.data[DOMAIN][entry.entry_id]
+    coordinator = data["coordinator"]
 
     tracked_macs = set()
 
