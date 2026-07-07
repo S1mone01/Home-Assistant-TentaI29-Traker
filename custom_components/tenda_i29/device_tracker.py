@@ -101,6 +101,7 @@ class TendaScannerEntity(CoordinatorEntity, ScannerEntity):
                 "velocita_rx": f"{data.get('rx_rate', '0')} Mbps",
                 "segnale": data.get("signal", ""),
                 "segnale_rumore": data.get("signal_noise", ""),
+                "banda": data.get("band", ""),
             }
         return {
             "mac_address": self._mac_address,

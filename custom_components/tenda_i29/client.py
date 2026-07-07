@@ -93,17 +93,27 @@ class TendaI29Client:
             return None
 
     def get_connected_devices(self):
-        """Recupera la lista dei dispositivi connessi con tutti i dettagli."""
-        json_response = self._api_post({"wifiClientList": {}})
-        
-        if json_response is None or "wifiClientList" not in json_response:
-            _LOGGER.warning("Impossibile ottenere la lista dei dispositivi.")
-            return {}
-
+        """Recupera la lista dei dispositivi connessi con tutti i dettagli (2.4GHz e 5GHz)."""
         devices = {}
-        client_list = json_response.get("wifiClientList", [])
-        _LOGGER.debug("Trovati %s dispositivi connessi", len(client_list))
+        
+        # 2.4GHz
+        json_24g = self._api_post({"wifiClientList": {}})
+        if json_24g and "wifiClientList" in json_24g:
+            self._parse_device_list(json_24g.get("wifiClientList", []), devices, "2.4GHz")
+        else:
+            _LOGGER.warning("Impossibile ottenere la lista dei dispositivi 2.4GHz.")
+            
+        # 5GHz
+        json_5g = self._api_post({"wifiClientList": {"radio": "5G", "ssidIndex": "0"}})
+        if json_5g and "wifiClientList" in json_5g:
+            self._parse_device_list(json_5g.get("wifiClientList", []), devices, "5GHz")
+        else:
+            _LOGGER.warning("Impossibile ottenere la lista dei dispositivi 5GHz.")
 
+        _LOGGER.debug("Trovati %s dispositivi connessi in totale", len(devices))
+        return devices
+
+    def _parse_device_list(self, client_list, devices, band):
         for device in client_list:
             mac = device.get("mac")
             if mac:
@@ -130,6 +140,5 @@ class TendaI29Client:
                     "rx_rate": device.get("rxRate", "0"),
                     "signal": signal,
                     "signal_noise": signal_noise,
+                    "band": band,
                 }
-
-        return devices
