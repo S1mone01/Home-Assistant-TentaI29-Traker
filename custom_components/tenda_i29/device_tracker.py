@@ -5,6 +5,7 @@ from homeassistant.components.device_tracker.config_entry import ScannerEntity, 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, CoordinatorEntity
+from homeassistant.helpers import device_registry as dr
 from homeassistant.const import CONF_HOST, CONF_PASSWORD
 
 from .const import DOMAIN

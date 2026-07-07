@@ -64,7 +64,7 @@ class TendaI29Client:
 
         try:
             response = requests.get(
-                f"http://{self.host}/goform/modules?{rand_param}",
+                f"http://{self.host}/goform/modules?module1=wifiClientList&{rand_param}",
                 headers=headers,
                 cookies=self.cookies,
                 verify=False,
