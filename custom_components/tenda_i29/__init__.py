@@ -6,6 +6,10 @@ from .const import DOMAIN
 
 PLATFORMS = [Platform.DEVICE_TRACKER]
 
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Configura l'integrazione Tenda i29."""
+    return True
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Configura il Tenda i29 da un Config Entry."""
     hass.data.setdefault(DOMAIN, {})
