@@ -37,8 +37,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         update_interval=timedelta(seconds=30),
     )
 
-    # Recupera i dati iniziali
-    await coordinator.async_config_entry_first_refresh()
+    # Recupera i dati iniziali (non bloccare il setup se fallisce)
+    await coordinator.async_refresh()
 
     # Salviamo i dati nell'istanza di HA
     hass.data[DOMAIN][entry.entry_id] = {

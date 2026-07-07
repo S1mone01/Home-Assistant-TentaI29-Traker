@@ -52,9 +52,13 @@ class TendaI29Client:
         else:
             _LOGGER.error("Autenticazione fallita: Nessun cookie ricevuto.")
 
-    def get_connected_devices(self):
+    def get_connected_devices(self, _retry=True):
         if self.cookies is None:
             self.auth()
+
+        if self.cookies is None:
+            _LOGGER.warning("Impossibile autenticarsi sul Tenda i29, salto il polling.")
+            return {}
 
         headers = {
             "Content-Type": "application/json; charset=UTF-8",
@@ -73,13 +77,17 @@ class TendaI29Client:
             )
 
             if response.status_code != 200 or b"wifiClientList" not in response.content:
-                _LOGGER.debug("Sessione scaduta o invalida, tento il ri-login...")
-                self.cookies = None
-                self.auth()
-                return self.get_connected_devices()
+                if _retry:
+                    _LOGGER.debug("Sessione scaduta o invalida, tento il ri-login...")
+                    self.cookies = None
+                    self.auth()
+                    return self.get_connected_devices(_retry=False)
+                _LOGGER.warning("Impossibile ottenere la lista dei dispositivi dopo il ri-login.")
+                return {}
 
             json_response = response.json()
-        except (requests.exceptions.RequestException, json.JSONDecodeError):
+        except (requests.exceptions.RequestException, json.JSONDecodeError) as err:
+            _LOGGER.warning("Errore nella richiesta al Tenda i29: %s", err)
             self.cookies = None
             return {}
 
