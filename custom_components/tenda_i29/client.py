@@ -23,19 +23,22 @@ class TendaI29Client:
         time_str = f"{now.year};{now.month};{now.day};{now.hour};{now.minute};{now.second}"
 
         payload = {
-            "username": "admin",
-            "password": base64_password,
-            "logoff": False,
-            "timeZone": 12,
-            "time": time_str
+            "sysLogin": {
+                "username": "admin",
+                "password": base64_password,
+                "logoff": False,
+                "timeZone": 12,
+                "time": time_str
+            }
         }
 
         headers = {
-            "Content-Type": "application/json; charset=UTF-8",
+            "Content-Type": "application/json",
         }
 
+        rand_param = f"{random.random()}"
         response = requests.post(
-            f"http://{self.host}/modules",
+            f"http://{self.host}/goform/modules?{rand_param}",
             headers=headers,
             json=payload,
             verify=False,
@@ -61,7 +64,7 @@ class TendaI29Client:
 
         try:
             response = requests.get(
-                f"http://{self.host}/modules?{rand_param}",
+                f"http://{self.host}/goform/modules?{rand_param}",
                 headers=headers,
                 cookies=self.cookies,
                 verify=False,
