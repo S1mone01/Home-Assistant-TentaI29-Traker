@@ -2,6 +2,7 @@
   "domain": "tenda_i29",
   "name": "Tenda i29 Device Tracker",
   "codeowners": ["@S1mone01"],
+  "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/S1mone01/Home-Assistant-TentaI29-Traker",
   "integration_type": "device_tracker",
