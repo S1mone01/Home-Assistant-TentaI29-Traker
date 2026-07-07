@@ -7,8 +7,8 @@ import random
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.components.device_tracker import DeviceScanner
+from homeassistant.components.device_tracker.legacy import async_process_config
 from homeassistant.const import CONF_HOST, CONF_PASSWORD
 
 from .const import DOMAIN
@@ -17,7 +17,7 @@ _LOGGER = logging.getLogger(__name__)
 
 # Sostituiamo il vecchio get_scanner con il setup moderno del config entry
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities
 ) -> bool:
     """Configura la piattaforma device_tracker basata sul Config Flow."""
     config = hass.data[DOMAIN][entry.entry_id]
@@ -28,7 +28,7 @@ async def async_setup_entry(
     if scanner.is_initialized:
         # Questo dice a HA di usare lo scanner appena configurato
         hass.async_create_task(
-            hass.components.device_tracker.async_process_config(
+            async_process_config(
                 {DOMAIN: config}, scanner
             )
         )
