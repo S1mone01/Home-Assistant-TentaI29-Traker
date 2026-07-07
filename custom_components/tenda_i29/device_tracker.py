@@ -67,6 +67,7 @@ class TendaScannerEntity(CoordinatorEntity, ScannerEntity):
         super().__init__(coordinator)
         self._mac_address = mac_address
         self._ip_address = ip_address
+        self._attr_unique_id = f"tenda_i29_{mac_address}"
 
     @property
     def mac_address(self) -> str:
