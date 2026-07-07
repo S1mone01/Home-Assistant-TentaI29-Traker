@@ -68,8 +68,8 @@ class TendaScannerEntity(CoordinatorEntity, ScannerEntity):
 
     @property
     def name(self) -> str:
-        """Ritorna il nome del dispositivo basato sul MAC."""
-        return f"Tenda {self._mac_address[-8:].upper()}"
+        """Ritorna il nome del dispositivo con MAC e IP."""
+        return f"Tenda {self._mac_address[-8:].upper()} ({self.ip_address})"
 
     @property
     def is_connected(self) -> bool:
@@ -82,3 +82,11 @@ class TendaScannerEntity(CoordinatorEntity, ScannerEntity):
     def source_type(self) -> SourceType:
         """Ritorna il tipo di sorgente (Router)."""
         return SourceType.ROUTER
+
+    @property
+    def extra_state_attributes(self):
+        """Attributi extra visibili nella scheda dell'entità."""
+        return {
+            "mac_address": self._mac_address,
+            "ip_address": self.ip_address,
+        }
