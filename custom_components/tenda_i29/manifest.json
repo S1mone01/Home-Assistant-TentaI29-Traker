@@ -8,6 +8,6 @@
   "integration_type": "device",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/S1mone01/Home-Assistant-TentaI29-Traker/issues",
-  "requirements": ["requests==2.32.3"],
+  "requirements": [],
   "version": "1.0.0"
 }
